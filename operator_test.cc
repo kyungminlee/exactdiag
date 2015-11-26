@@ -66,5 +66,11 @@ int main(int argc, char** argv)
   cout << "===== Hopping =====" << endl;
   (cre.term(4) * ann.term(1)).display();
 
+  cout << "===== Basis Generation =====" << endl;
+
+  for (auto iter = system.cbegin(Charge(3), Spin(0)) ; iter.valid() ; ++iter) {
+    for (auto f : *iter) { cout << f << "\t"; } cout << endl;
+
+  }
   return 0;
 }
