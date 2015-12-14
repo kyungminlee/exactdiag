@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <cmath>
 #include <bitset>
 #include <tuple>
 #include <iostream>
@@ -7,8 +8,83 @@
 #include <vector>
 
 class GenericOperator{ };
+template <typename _Scalar, size_t _RepSize, size_t _SiteSize>
+class PureOperator;
 
-template <typename _Scalar, size_t _RepSize, size_t _SiteSize = _RepSize>
+template <typename ...QNS>
+class System;
+
+template <typename _Scalar>
+class RawRepOperator
+{
+ public:
+  using Scalar = _Scalar;
+
+  template <size_t RepSize, size_t SiteSize, typename ... QNS>
+  RawRepOperator(const System<QNS...>& sys, PureOperator<Scalar, RepSize, SiteSize> const & po)
+  {
+    size_t ns = sys.n_site();
+    size_t nd = sys.n_digit();
+    assert(nd >= RepSize);
+    assert(ns >= SiteSize);
+
+    auto m = po.mask();
+    for (size_t idx_site = 0 ; idx_site < ns ; ++idx_site) {
+      std::bitset<RepSize> site_mask;
+      sys.mask_digit(idx_site, site_mask);
+      if ( (m & site_mask).any()) {
+        assert((m & site_mask).count() == site_mask.count());
+        size_t sdig = sys.start_digit(idx_site);
+        size_t mdig = sys.site(idx_site).n_digit();
+        auto r = (po.row() & site_mask) >> sdig;
+        auto c = (po.col() & site_mask) >> sdig;
+        mask_.push_back(idx_site);
+        row_.push_back(r.to_ulong());
+        col_.push_back(c.to_ulong());
+      }
+
+      std::bitset<SiteSize> site_fmask = 1;
+      site_fmask <<= idx_site;
+      if ((po.fp_mask() & site_fmask).any()) {
+        auto r = (po.fp_row() & site_fmask) >> idx_site;
+        auto c = (po.fp_col() & site_fmask) >> idx_site;
+        fp_mask_.push_back(idx_site);
+        fp_row_.push_back(r.to_ulong());
+        fp_col_.push_back(c.to_ulong());
+      }
+
+      if ((po.fp_check() & site_fmask).any()) {
+        fp_check_.push_back(idx_site);
+      }
+    }
+    coefficient_ = po.coefficient();
+  }
+
+  void display(std::ostream& os = std::cout, std::string prefix = "") const {
+    auto show = [&os, &prefix](const char* str, const std::vector<size_t>& vlist) -> void {
+      os << prefix << str;
+      bool first = true;
+      for (auto v : vlist) { if (!first) { os << ", "; } os << v; first = false; }
+      os << std::endl;
+    };
+    os << prefix << "RawRepOperator(" << this << ")" << std::endl;
+    show(           "  mask        : ", mask_);
+    show(           "  row         : ", row_);
+    show(           "  col         : ", col_);
+    show(           "  fp_mask     : ", fp_mask_);
+    show(           "  fp_row      : ", fp_row_);
+    show(           "  fp_col      : ", fp_col_);
+    show(           "  fp_check    : ", fp_check_);
+    os << prefix << "  coefficient : " << coefficient_ << std::endl;
+  }
+
+ private:
+  std::vector<size_t> mask_, row_, col_;
+  std::vector<size_t> fp_mask_, fp_row_, fp_col_, fp_check_;
+  Scalar coefficient_;
+};
+
+template <typename _Scalar, size_t _RepSize, size_t _SiteSize>
 class PureOperator : public GenericOperator
 {
  public:
@@ -58,7 +134,7 @@ class PureOperator : public GenericOperator
 
 
   PureOperator operator*(Scalar v) const {
-    if (fabs(v) < std::numeric_limits<Scalar>::epsilon()) {
+    if (std::abs(v) < std::numeric_limits<Scalar>::epsilon()) {
       return PureOperator();
     } else {
       return PureOperator(mask_, row_, col_, fp_mask_, fp_row_, fp_col_, fp_check_, coefficient_ * v);
@@ -145,7 +221,7 @@ template <typename Scalar, size_t RepSize, size_t SiteSize> inline
 PureOperator<Scalar, RepSize, SiteSize> operator*(const Scalar & v,
                                                   const PureOperator<Scalar, RepSize, SiteSize> & op)
 {
-  if (fabs(v) < std::numeric_limits<Scalar>::epsilon()) {
+  if (std::abs(v) < std::numeric_limits<Scalar>::epsilon()) {
     return PureOperator<Scalar, RepSize, SiteSize>();
   } else {
     return PureOperator<Scalar, RepSize, SiteSize>(
@@ -194,6 +270,17 @@ class MixedOperator : public GenericOperator
     for (auto const & term : terms_) {
       term.display(os, prefix + "  ");
     }
+  }
+
+  std::vector<std::tuple<Rep, SiteRep, Scalar>>
+  apply(const Rep& bvec, const SiteRep& fvec) const {
+    std::vector<std::tuple<Rep, SiteRep, Scalar>> ret;
+    for (auto const & term : terms_) {
+      if (term.match(bvec)) {
+        ret.push_back(term.apply(bvec, fvec));
+      }
+    }
+    return ret;
   }
 
  private:

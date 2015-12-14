@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <memory>
@@ -17,8 +18,17 @@ template <typename ... QNS>
 class State {
  public:
   using QuantumNumberTuple = std::tuple<QNS...>;
+
   State(bool fermion_parity, const QNS & ... quantum_number)
-          : fermion_parity_(fermion_parity)
+          : name_("")
+          , fermion_parity_(fermion_parity)
+          , quantum_number_(quantum_number...)
+  {
+  }
+
+  State(const char* name, bool fermion_parity, const QNS & ... quantum_number)
+          : name_(name)
+          , fermion_parity_(fermion_parity)
           , quantum_number_(quantum_number...)
   {
   }
@@ -26,6 +36,7 @@ class State {
   void display(std::ostream& os = std::cout, std::string prefix = "") const
   {
     os << prefix << "State" << std::endl;
+    if (name_.size() > 0) { os << prefix << "  name          : " << name_ << std::endl; }
     os << prefix << "  fermion_parity: " << fermion_parity_ << std::endl;
     os << prefix << "  quantum_number: " << quantum_number_ << std::endl;
   }
@@ -35,6 +46,7 @@ class State {
   const QuantumNumberTuple& QN() const { return quantum_number_; }
 
  private:
+  std::string name_;
   bool fermion_parity_;
   QuantumNumberTuple quantum_number_;
 };
@@ -113,25 +125,25 @@ class System {
   using QuantumNumberTuple = std::tuple<QNS...>;
 
   template<typename ...Args>
-  System(const SiteType &site, Args ... args) {
-    add_site(site, args...);
+  System(Args ... sites) {
+    add_site(sites...);
   }
 
-  System &add_site() { return *this; }
+  System & add_site() { return *this; }
 
   template<typename ... Args>
-  System &add_site(const SiteType &site, Args ... args) {
+  System & add_site(const SiteType &site, Args ... args) {
     sites_.push_back(site);
     return add_site(args...);
   }
 
 
-  SiteType &site(size_t idx_site) {
+  SiteType & site(size_t idx_site) {
     assert(idx_site < n_site());
     return sites_[idx_site];
   }
 
-  const SiteType &site(size_t idx_site) const {
+  const SiteType & site(size_t idx_site) const {
     assert(idx_site < n_site());
     return sites_[idx_site];
   }
@@ -172,21 +184,34 @@ class System {
     return mask;
   }
 
-  // inclusive
+  template<size_t RepSize>
+  void mask_digit(size_t idx_site, std::bitset<RepSize>& mask) const {
+    assert(idx_site < n_site());
+    size_t sdig = start_digit(idx_site);
+    size_t mdig = sites_[idx_site].n_digit();
+    mask.reset();
+    for (size_t i = sdig; i < (sdig + mdig); ++i) {
+      mask.set(i, true);
+    }
+  }
+
+
+  // not inclusive
   QuantumNumberTuple max_quantum_number(size_t i_site) const {
     assert(i_site < sites_.size());
     QuantumNumberTuple c;
-    for (size_t j = 0; j <= i_site; ++j) {
+    for (size_t j = 0; j < i_site; ++j) {
       c = elementwise(c) + elementwise(sites_[j].max_quantum_number());
     }
     return c;
   }
 
-  // inclusive
+
+  // not inclusive
   QuantumNumberTuple min_quantum_number(size_t i_site) const {
     assert(i_site < sites_.size());
     QuantumNumberTuple c;
-    for (size_t j = 0; j <= i_site; ++j) {
+    for (size_t j = 0; j < i_site; ++j) {
       c = elementwise(c) + elementwise(sites_[j].min_quantum_number());
     }
     return c;
@@ -201,6 +226,7 @@ class System {
     return c;
   }
 
+
   QuantumNumberTuple min_quantum_number() const {
     QuantumNumberTuple c;
     for (size_t j = 0; j < n_site(); ++j) {
@@ -208,6 +234,15 @@ class System {
     }
     return c;
   }
+
+
+  template <typename PureOperatorType>
+  bool comply(const PureOperatorType& op) {
+    if (PureOperatorType::RepSize < n_digit()) { return false; }
+    if (PureOperatorType::SiteSize < n_site()) { return false; }
+
+  }
+
 
   template<typename Scalar, size_t RepSize, size_t SiteSize = RepSize>
   PureOperator<Scalar, RepSize, SiteSize>
@@ -252,7 +287,7 @@ class System {
   }
 
 
-  template<size_t RepSize, size_t SiteSize = RepSize>
+  template<size_t RepSize, size_t SiteSize>
   std::tuple<std::bitset<RepSize>, std::bitset<SiteSize> >
   get_state_representation(size_t idx_site, size_t idx_state) const {
 
@@ -320,7 +355,7 @@ class BasisIterator
 
   class InvalidIterator { };
 
-  using SystemType = System<QNS...>;
+  typedef System<QNS...> SystemType;
   using QuantumNumberTuple = typename SystemType::QuantumNumberTuple;
 
   using ValueType = std::tuple<std::bitset<RepSize>, std::bitset<SiteSize>>;
@@ -343,6 +378,7 @@ class BasisIterator
       //throw std::logic_error("Dictionary empty");
       valid_ = false;
     }
+
   }
 
   template <typename T1, typename T2>
@@ -353,9 +389,27 @@ class BasisIterator
     return std::make_tuple(first_t<bool,QNS>(true)...);
   };
 
+  struct Tracker {
+    Tracker(const char* in, const char* out)
+    : in_(in), out_(out)
+    {
+      std::cout << in_ << std::endl;
+    }
+    ~Tracker(){
+      std::cout << out_ << std::endl;
+    }
+    std::string in_, out_;
+  };
+
   bool set_first_rec(size_t level) {
     assert(valid_);
-    DEBUGRUN(std::cout << "LEVEL(" << level << ") : ";)
+    /*
+    std::stringstream inmsg, outmsg;
+    inmsg << "BEGIN set_first_rec(" << level << ")";
+    outmsg << "END set_first_rec(" << level << ")";
+    Tracker tt(inmsg.str().c_str(), outmsg.str().c_str());
+    */
+    DEBUGRUN(std::cout << "set_first_rec(" << level << ") : ";)
     DEBUGRUN(for(auto c : current_state_) { std::cout << c << ", ";} std::cout << std::endl;)
 
     if (level == 0) {
@@ -382,14 +436,14 @@ class BasisIterator
                         + elementwise(system_.min_quantum_number(level));
           auto test_min = (elementwise(min_qn) <= elementwise(quantum_number_));
           DEBUGRUN(std::cout << "Testing Min QN: " << min_qn << " vs. " << quantum_number_ << " => "<< (all(test_min))<< std::endl;)
-          if (!all(test_min)) { return false; }
+          if (!all(test_min)) { continue; }
         }
         {
           auto max_qn = elementwise(qn)
                         + elementwise(system_.max_quantum_number(level));
           auto test_max = (elementwise(quantum_number_) <= elementwise(max_qn));
           DEBUGRUN(std::cout << "Testing Max QN: " << max_qn << " vs. " << quantum_number_ << " => "<< (all(test_max))<< std::endl;)
-          if (!all(test_max)) { return false; }
+          if (!all(test_max)) { continue; }
         }
         cumulative_quantum_number_[level-1] = qn;
         if (set_first_rec(level-1)) { return true; }
@@ -411,17 +465,19 @@ class BasisIterator
     }
   }
 
-  bool next(size_t level) {
-
+  bool next(size_t level)
+  {
     assert(valid_);
+    DEBUGRUN(std::cout << "next(" << level << ") : ";)
+    DEBUGRUN(for(auto c : current_state_) { std::cout << c << ", ";} std::cout << std::endl;)
+
     if (level == 0) {
       auto const & site = system_.site(level);
       for (++current_state_[level]; current_state_[level] < site.n_state() ; ++current_state_[level]) {
         auto const & state = site.state(current_state_[level]);
         auto qn = elementwise(cumulative_quantum_number_[level])
                   + elementwise(state.quantum_number());
-        QuantumNumberTuple zero_qn;
-        if (qn == zero_qn) { return true; }
+        if (qn == quantum_number_) { return true; }
       }
       return false;
     } else if (level >= system_.n_site()) {
@@ -438,13 +494,13 @@ class BasisIterator
           auto min_qn = elementwise(qn)
                         + elementwise(system_.min_quantum_number(level));
           auto test_min = (elementwise(min_qn) <= elementwise(quantum_number_));
-          if (!all(test_min)) { return false; }
+          if (!all(test_min)) { continue; }
         }
         {
           auto max_qn = elementwise(qn)
                         + elementwise(system_.max_quantum_number(level));
           auto test_max = (elementwise(quantum_number_) <= elementwise(max_qn));
-          if (!all(test_max)) { return false; }
+          if (!all(test_max)) { continue; }
         }
         cumulative_quantum_number_[level-1] = qn;
         if (set_first_rec(level-1)) { return true; }
@@ -465,8 +521,21 @@ class BasisIterator
   }
 
   std::tuple<std::bitset<RepSize>, std::bitset<SiteSize>>
-          get() const {
-
+  get() const
+  {
+    std::tuple<std::bitset<RepSize>, std::bitset<SiteSize> > ret;
+    for (size_t i = 0 ; i < system_.n_site() ; ++i) {
+      std::bitset<RepSize> vr(current_state_[i]);
+      std::bitset<RepSize> vf(system_.site(i).state(current_state_[i]).fermion_parity());
+      vr <<= system_.start_digit(i);
+      vf <<= i;
+      //auto func = system_.get_state_representation<RepSize, SiteSize>;
+      //auto v = func(i, current_state_[i]);
+      //auto v = system_.get_state_representation<RepSize, SiteSize>(i, current_state_[i]);
+      std::get<0>(ret) |= vr;
+      std::get<1>(ret) |= vf;
+    }
+    return ret;
   };
 
  private:

@@ -26,22 +26,6 @@ class QuantumNumber {
   ValueType value_;
 };
 
-class Charge : public QuantumNumber<std::int64_t>
-{
- public:
-  static constexpr const char * name = "Charge";
-  Charge() : QuantumNumber<std::int64_t>(0) { }
-  Charge(std::int64_t value) : QuantumNumber<std::int64_t>(value) { }
-};
-
-class Spin : public QuantumNumber<std::int64_t>
-{
- public:
-  static constexpr const char * name = "Spin";
-  Spin() : QuantumNumber<std::int64_t>(0) { }
-  Spin(std::int64_t value) : QuantumNumber<std::int64_t>(value) { }
-};
-
 
 
 template <typename QN,
@@ -108,10 +92,6 @@ bool operator>=(const QN& q1, const QN& q2)
   return (q1.value() >= q2.value());
 }
 
-
-
-
-
 template <typename QN,
           detail::enable_if_t<
                   std::is_base_of<QuantumNumber<typename QN::ValueType>, QN>::value,
@@ -120,4 +100,22 @@ std::ostream & operator<<(std::ostream& os, const QN& q)
 {
   return (os << QN::name << "(" << q.value() << ")");
 }
+
+
+
+class Charge : public QuantumNumber<std::int64_t>
+{
+ public:
+  static constexpr const char * name = "Charge";
+  Charge() : QuantumNumber<std::int64_t>(0) { }
+  Charge(std::int64_t value) : QuantumNumber<std::int64_t>(value) { }
+};
+
+class Spin : public QuantumNumber<std::int64_t>
+{
+ public:
+  static constexpr const char * name = "Spin";
+  Spin() : QuantumNumber<std::int64_t>(0) { }
+  Spin(std::int64_t value) : QuantumNumber<std::int64_t>(value) { }
+};
 
