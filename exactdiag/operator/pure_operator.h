@@ -1,6 +1,6 @@
 #pragma once
+#include "../global.h"
 
-#include "operator.h"
 
 template <typename _Scalar, size_t _RepSize, size_t _SiteSize>
 class PureOperator;

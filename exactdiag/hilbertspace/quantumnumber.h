@@ -5,12 +5,10 @@
 #include <type_traits>
 #include <typeinfo>
 
-
 namespace detail {
 template<bool B, class T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
 }
-
 
 
 template <typename _ValueType>
@@ -102,7 +100,6 @@ std::ostream & operator<<(std::ostream& os, const QN& q)
 }
 
 
-
 class Charge : public QuantumNumber<std::int64_t>
 {
  public:
@@ -110,6 +107,7 @@ class Charge : public QuantumNumber<std::int64_t>
   Charge() : QuantumNumber<std::int64_t>(0) { }
   Charge(std::int64_t value) : QuantumNumber<std::int64_t>(value) { }
 };
+
 
 class Spin : public QuantumNumber<std::int64_t>
 {

@@ -1,10 +1,15 @@
 #pragma once
+#include "../global.h"
 
-#include "hilbertspace.h"
-#include "operator.h"
+#include "../hilbertspace.h"
 
 template <typename ...QNS>
 class System;
+
+
+template <typename _Scalar>
+class RawRepOperator;
+
 
 template <typename _Scalar>
 class RawRepOperator : public GenericOperator<_Scalar>

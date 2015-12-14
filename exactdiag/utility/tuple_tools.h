@@ -21,8 +21,8 @@ struct _Elementwise_impl
 
   template <typename _TupleType>
       _Elementwise_impl(_TupleType&& t)
-      : _head_impl(std::get<_Idx>(t))
-      , _Elementwise_impl<_Idx+1, _Tail...>(std::forward<_TupleType>(t))
+      : _Elementwise_impl<_Idx+1, _Tail...>(std::forward<_TupleType>(t))
+      , _head_impl(std::get<_Idx>(t))
   {
   }
 
