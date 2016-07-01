@@ -1,4 +1,10 @@
 #pragma once
+//
+// Quantum Number (U(1))
+//
+//
+//
+
 
 #include <cinttypes>
 #include <tuple>
@@ -20,6 +26,8 @@ class QuantumNumber {
 
   QuantumNumber(const ValueType& value) : value_(value) { }
   const ValueType & value() const { return value_; }
+
+  QuantumNumber& operator++() { ++value_; return *this; }
  protected:
   ValueType value_;
 };

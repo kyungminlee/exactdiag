@@ -1,7 +1,13 @@
 #pragma once
+//!
+//!
+
 #include "../global.h"
 
-
+//! SectorGenerator class.
+//!
+//! Sector defined by QuantumNumbers.
+//!
 template <size_t _RepSize, size_t _SiteSize, typename ...QuantumNumbers>
 class SectorGenerator {
  public:

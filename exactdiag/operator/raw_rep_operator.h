@@ -7,18 +7,21 @@ template <typename ...QNS>
 class System;
 
 
-template <typename _Scalar>
+template <typename _Scalar, typename ... QNS>
 class RawRepOperator;
 
 
-template <typename _Scalar>
+template <typename _Scalar, typename ... QNS>
 class RawRepOperator : public GenericOperator<_Scalar>
 {
  public:
   using Scalar = _Scalar;
+  using SystemType = System<QNS...>;
 
-  template <size_t RepSize, size_t SiteSize, typename ... QNS>
-  RawRepOperator(const System<QNS...>& sys, PureOperator<Scalar, RepSize, SiteSize> const & po)
+  template <size_t RepSize, size_t SiteSize>
+  RawRepOperator(const SystemType& sys,
+                 PureOperator<Scalar, RepSize, SiteSize> const & po)
+  : system_(sys)
   {
     size_t ns = sys.n_site();
     size_t nd = sys.n_digit();
@@ -32,7 +35,7 @@ class RawRepOperator : public GenericOperator<_Scalar>
       if ( (m & site_mask).any()) {
         assert((m & site_mask).count() == site_mask.count());
         size_t sdig = sys.start_digit(idx_site);
-        size_t mdig = sys.site(idx_site).n_digit();
+        //size_t mdig = sys.site(idx_site).n_digit();
         auto r = (po.row() & site_mask) >> sdig;
         auto c = (po.col() & site_mask) >> sdig;
         mask_.push_back(idx_site);
@@ -75,8 +78,49 @@ class RawRepOperator : public GenericOperator<_Scalar>
     os << prefix << "  coefficient : " << coefficient_ << std::endl;
   }
 
+
+  //
+  std::vector<size_t> const & mask()     const { return mask_; }
+  std::vector<size_t> const & row()      const { return row_; }
+  std::vector<size_t> const & col()      const { return col_; }
+  std::vector<size_t> const & fp_mask()  const { return fp_mask_; }
+  std::vector<size_t> const & fp_row()   const { return fp_row_; }
+  std::vector<size_t> const & fp_col()   const { return fp_col_; }
+  std::vector<size_t> const & fp_check() const { return fp_check_; }
+  Scalar coefficient() const { return coefficient_; }
+
+  //! conform
+  //! check if the change of quantum number is zero.
+  bool conform(const System<QNS...>& system) const {
+    //TODO(kmlee):20151215
+    auto row_quantum_number = std::make_tuple(QNS(0)...);
+    auto col_quantum_number = std::make_tuple(QNS(0)...);
+    size_t n_site = system.n_site();
+
+    for (size_t i_site = 0 ; i_site < n_site ; ++i_site) {
+      if (mask_[i_site]) {
+        //row_quantum_number = elementwise(row_quantum_number) +
+        auto site = system.site(i_site);
+        auto row_state = site.state(row_[i_site]);
+        auto col_state = site.state(col_[i_site]);
+        row_quantum_number = elementwise(row_quantum_number)
+                             + elementwise(row_state.quantum_number());
+        col_quantum_number = elementwise(col_quantum_number)
+                             + elementwise(col_state.quantum_number());
+      }
+    }
+    return row_quantum_number == col_quantum_number;
+
+
+  }
+
+
+
  private:
+  const SystemType& system_;
   std::vector<size_t> mask_, row_, col_;
   std::vector<size_t> fp_mask_, fp_row_, fp_col_, fp_check_;
   Scalar coefficient_;
+
+
 };

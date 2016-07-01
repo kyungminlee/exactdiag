@@ -16,9 +16,11 @@ class System {
   using SiteType = Site<QNS...>;
   using QuantumNumberTuple = std::tuple<QNS...>;
 
+  System() { }
+
   template<typename ...Args>
-  System(Args ... sites) {
-    add_site(sites...);
+  System(const SiteType& site, Args ... sites) {
+    add_site(site, sites...);
   }
 
   System & add_site() { return *this; }
