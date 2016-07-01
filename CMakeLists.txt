@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS
 set(SOURCE_FILES
     main.cc
     )
+
 set(HEADER_FILES
     exactdiag/global.h
     exactdiag/operator.h
