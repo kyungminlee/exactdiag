@@ -41,6 +41,16 @@ class State {
     os << prefix << "  quantum_number: " << quantum_number_ << std::endl;
   }
 
+  //! Equality operator
+  bool operator==(const State & state2) const {
+    return (name_ == state2.name_) &&
+        (fermion_parity_ == state2.fermion_parity_) &&
+        (quantum_number_ == state2.quantum_number_);
+  }
+
+  bool operator!=(const State& state2) const {
+    return !((*this) == state2);
+  }
   bool fermion_parity() const { return fermion_parity_; }
   const QuantumNumberTuple& quantum_number() const { return quantum_number_; }
   const QuantumNumberTuple& QN() const { return quantum_number_; }

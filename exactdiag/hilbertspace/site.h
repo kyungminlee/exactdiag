@@ -82,6 +82,20 @@ public:
     return ret;
   }
 
+
+  bool operator==(const Site& rhs) const {
+    size_t n = states_.size();
+    if (rhs.states_.size() != n) { return false; }
+    for (size_t i = 0 ; i < n ; ++i) {
+      if (states_[i] != rhs.states_[i]) { return false; }
+    }
+    return true;
+  }
+
+  bool operator!=(const Site& rhs) const {
+    return !((*this) == rhs);
+  }
+
   //! Get a state with the given index.
   //! @return State
   const StateType & state(size_t idx_state) const {
