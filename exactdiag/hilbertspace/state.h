@@ -1,11 +1,19 @@
 #pragma once
 #include "../global.h"
 
+//! State
+//! defined by fermion parity and quantum number.
+//!
+//! @tparam QNS List of U(1) quantum numbers.
 template <typename ... QNS>
 class State {
  public:
   using QuantumNumberTuple = std::tuple<QNS...>;
 
+  //! Constructor
+  //! @brief Construct a %State of a %Site with the given fermion parity and quantum numbers
+  //! @param fermion_parity
+  //! @param quantum_number
   State(bool fermion_parity, const QNS & ... quantum_number)
       : name_("")
       , fermion_parity_(fermion_parity)
@@ -13,6 +21,11 @@ class State {
   {
   }
 
+  //! Constructor
+  //! @brief Construct a %State of a %Site with the given name, fermion parity and quantum numbers
+  //! @param name
+  //! @param fermion_parity
+  //! @param quantum_number
   State(const char* name, bool fermion_parity, const QNS & ... quantum_number)
       : name_(name)
       , fermion_parity_(fermion_parity)

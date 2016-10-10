@@ -17,6 +17,10 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 }
 
 
+//! @class QuantumNumber
+//! @brief A U(1) quantum number type
+//! @tparam _ValueType Integer type for the quantum number (Since U(1)).
+//!
 template <typename _ValueType>
 class QuantumNumber {
  public:

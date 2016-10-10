@@ -1,9 +1,8 @@
 #include <unordered_map>
 
 #include "operator.h"
-#include "quantumnumber.h"
 #include "hilbertspace.h"
-#include "tuple_tools.h"
+#include "utility/tuple_tools.h"
 
 
 int main_spinfermion(int argc, char** argv)
@@ -43,12 +42,12 @@ int main_spinfermion(int argc, char** argv)
 
   MixedOperator<double, RepSize, SiteSize> ann, cre, hop;
   for (size_t i_site = 0 ; i_site < system.n_site() ; ++i_site) {
-    auto const &site = system.site(i_site);
+    //auto const &site = system.site(i_site);
     auto c = system.get_operator<double, RepSize, SiteSize>(i_site, 0, 1);
     auto cdag = system.get_operator<double, RepSize, SiteSize>(i_site, 1, 0);
     ann.add(c);
     cre.add(cdag);
-    RawRepOperator<double> raw_ann(system, c);
+    RawRepOperator<double, Charge, Spin> raw_ann(system, c);
     c.display();
     raw_ann.display();
     cout << endl;
@@ -183,7 +182,7 @@ int main_test(int argc, char** argv)
   cout << "===== System Operator Test =====" << endl;
   MixedOperator<double, 6, 6> ann, cre;
   for (size_t i_site = 0 ; i_site < system.n_site() ; ++i_site) {
-    auto const & site = system.site(i_site);
+    //auto const & site = system.site(i_site);
     auto c    = system.get_operator<double, 6, 6>(i_site, 0, 1);
     auto cdag = system.get_operator<double, 6, 6>(i_site, 1, 0);
     ann.add(c);

@@ -6,11 +6,14 @@
 template <typename ...QNS>
 class System;
 
-
 template <typename _Scalar, typename ... QNS>
 class RawRepOperator;
 
-
+//! @class RawRepOperator
+//! @brief RawRepOperator is the internal implementation of an operator. 
+//!
+//! @tparam _Scalar Scalar type
+//! @tparam QNS List of quantum numbers (U(1))
 template <typename _Scalar, typename ... QNS>
 class RawRepOperator : public GenericOperator<_Scalar>
 {
@@ -18,6 +21,9 @@ class RawRepOperator : public GenericOperator<_Scalar>
   using Scalar = _Scalar;
   using SystemType = System<QNS...>;
 
+  //! Constructor
+  //! @tparam RepSize Length of the binary representation
+  //! @tparam SiteSize Number of sites (containts fermion parity, for example.)
   template <size_t RepSize, size_t SiteSize>
   RawRepOperator(const SystemType& sys,
                  PureOperator<Scalar, RepSize, SiteSize> const & po)
@@ -60,6 +66,7 @@ class RawRepOperator : public GenericOperator<_Scalar>
     coefficient_ = po.coefficient();
   }
 
+
   void display(std::ostream& os = std::cout, std::string prefix = "") const {
     auto show = [&os, &prefix](const char* str, const std::vector<size_t>& vlist) -> void {
       os << prefix << str;
@@ -79,7 +86,7 @@ class RawRepOperator : public GenericOperator<_Scalar>
   }
 
 
-  //
+  //!< Getters
   std::vector<size_t> const & mask()     const { return mask_; }
   std::vector<size_t> const & row()      const { return row_; }
   std::vector<size_t> const & col()      const { return col_; }
@@ -88,18 +95,18 @@ class RawRepOperator : public GenericOperator<_Scalar>
   std::vector<size_t> const & fp_col()   const { return fp_col_; }
   std::vector<size_t> const & fp_check() const { return fp_check_; }
   Scalar coefficient() const { return coefficient_; }
+  //!>
+
 
   //! conform
-  //! check if the change of quantum number is zero.
+  //! @brief Check if the change of all quantum numbers is zero.
   bool conform(const System<QNS...>& system) const {
-    //TODO(kmlee):20151215
     auto row_quantum_number = std::make_tuple(QNS(0)...);
     auto col_quantum_number = std::make_tuple(QNS(0)...);
     size_t n_site = system.n_site();
 
     for (size_t i_site = 0 ; i_site < n_site ; ++i_site) {
       if (mask_[i_site]) {
-        //row_quantum_number = elementwise(row_quantum_number) +
         auto site = system.site(i_site);
         auto row_state = site.state(row_[i_site]);
         auto col_state = site.state(col_[i_site]);
@@ -110,17 +117,11 @@ class RawRepOperator : public GenericOperator<_Scalar>
       }
     }
     return row_quantum_number == col_quantum_number;
-
-
   }
-
-
 
  private:
   const SystemType& system_;
   std::vector<size_t> mask_, row_, col_;
   std::vector<size_t> fp_mask_, fp_row_, fp_col_, fp_check_;
   Scalar coefficient_;
-
-
 };

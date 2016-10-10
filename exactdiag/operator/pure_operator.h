@@ -11,7 +11,10 @@ class MixedOperator;
 
 //! PureOperator
 //!
-//!
+//! @brief Single "term" in terms of fermion and boson operators.
+//! @tparam _Scalar Scalar(Field) type of the coefficient.
+//! @tparam _RepSize Number of bits of the Rep
+//! @tparam _SiteSize Number of bits of the Site (for fermion parity counting).
 template <typename _Scalar, size_t _RepSize, size_t _SiteSize>
 class PureOperator : public GenericOperator<_Scalar>
 {
@@ -168,7 +171,10 @@ PureOperator<Scalar, RepSize, SiteSize> operator*(const Scalar & v,
 
 //! MixedOperator
 //!
-//!
+//! @brief Multiple "terms" in terms of fermion and boson operators.
+//! @tparam _Scalar Scalar(Field) type of the coefficient.
+//! @tparam _RepSize Number of bits of the Rep
+//! @tparam _SiteSize Number of bits of the Site (for fermion parity counting).
 template <typename _Scalar, size_t _RepSize, size_t _SiteSize>
 class MixedOperator : public GenericOperator<_Scalar>
 {
@@ -183,6 +189,14 @@ class MixedOperator : public GenericOperator<_Scalar>
 
   MixedOperator()
   {
+  }
+
+  template <typename Iterator>
+  MixedOperator(Iterator begin, Iterator end)
+  {
+    for (auto c = begin; c != end ; ++c) {
+      this->add(*c);
+    }
   }
 
   template <typename T>

@@ -9,6 +9,11 @@
 template <size_t _RepSize, size_t _SiteSize, typename ... QNS>
 class BasisIterator;
 
+//! System
+//!
+//! System consists of sites.
+//! Each site is represented by one or more digits in Rep, depending on its degrees of freedom.
+//! @tparam QNS List of U(1) quantum numbers.
 template <typename ...QNS>
 class System {
  public:
@@ -16,27 +21,32 @@ class System {
   using SiteType = Site<QNS...>;
   using QuantumNumberTuple = std::tuple<QNS...>;
 
+  //! @class Default Constructor
   System() { }
 
+  //! @class Consturctor with a list of sites.
+  //! @param site %Site
+  //! @param sites Rest of the %Site s.
   template<typename ...Args>
   System(const SiteType& site, Args ... sites) {
     add_site(site, sites...);
   }
 
-  System & add_site() { return *this; }
-
+public:
+  //! Add sites.
   template<typename ... Args>
   System & add_site(const SiteType &site, Args ... args) {
     sites_.push_back(site);
     return add_site(args...);
   }
 
-
+  //! Get site of the given index.
   SiteType & site(size_t idx_site) {
     assert(idx_site < n_site());
     return sites_[idx_site];
   }
 
+  //! Get site of the given index.
   const SiteType & site(size_t idx_site) const {
     assert(idx_site < n_site());
     return sites_[idx_site];
@@ -49,6 +59,7 @@ class System {
     }
   }
 
+  //! Number of digits required for a binary representation of the basis.
   size_t n_digit() const {
     size_t n_dig = 0;
     for (auto const &site : sites_) {
@@ -57,6 +68,7 @@ class System {
     return n_dig;
   }
 
+  //! Start digit of the site with the given index
   size_t start_digit(size_t idx_site) const {
     assert(idx_site < n_site());
     size_t n_dig = 0;
@@ -66,6 +78,7 @@ class System {
     return n_dig;
   }
 
+  //! Get a bitmask for the site with the given index (in binary representation)
   template<size_t RepSize>
   std::bitset<RepSize> mask_digit(size_t idx_site) const {
     assert(idx_site < n_site());
@@ -78,6 +91,7 @@ class System {
     return mask;
   }
 
+  //! set the mask (m |= 1) of the site with the given index.
   template<size_t RepSize>
   void mask_digit(size_t idx_site, std::bitset<RepSize>& mask) const {
     assert(idx_site < n_site());
@@ -89,7 +103,7 @@ class System {
     }
   }
 
-
+  //! maximum possible quantum number for the subsystem consisting of sites 0 to < i_site.
   // not inclusive
   QuantumNumberTuple max_quantum_number(size_t i_site) const {
     assert(i_site < sites_.size());
@@ -100,7 +114,7 @@ class System {
     return c;
   }
 
-
+  //! minimum possible quantum number for the subsystem consisting of sites 0 to < i_site.
   // not inclusive
   QuantumNumberTuple min_quantum_number(size_t i_site) const {
     assert(i_site < sites_.size());
@@ -111,7 +125,7 @@ class System {
     return c;
   }
 
-
+  //! Tuple of maximum quantum numbers
   QuantumNumberTuple max_quantum_number() const {
     QuantumNumberTuple c;
     for (size_t j = 0; j < n_site(); ++j) {
@@ -120,7 +134,7 @@ class System {
     return c;
   }
 
-
+  //! Tuple of minimum quantum numbers
   QuantumNumberTuple min_quantum_number() const {
     QuantumNumberTuple c;
     for (size_t j = 0; j < n_site(); ++j) {
@@ -129,15 +143,15 @@ class System {
     return c;
   }
 
-
+  //! Check whether the given operator's binary representations are large enough. 
   template <typename PureOperatorType>
   bool comply(const PureOperatorType& op) {
     if (PureOperatorType::RepSize < n_digit()) { return false; }
     if (PureOperatorType::SiteSize < n_site()) { return false; }
-
+	return true;
   }
 
-
+  //! Create an operator which maps a local state to another.
   template<typename Scalar, size_t RepSize, size_t SiteSize = RepSize>
   PureOperator<Scalar, RepSize, SiteSize>
   get_operator(size_t idx_site, size_t idx_rowstate, size_t idx_colstate) const {
@@ -180,10 +194,13 @@ class System {
   }
 
 
+  //! Get representation of a state of a site.
+  //! @param idx_site Index of the %Site in question.
+  //! @param idx_state Index of the state.
   template<size_t RepSize, size_t SiteSize>
   std::tuple<std::bitset<RepSize>, std::bitset<SiteSize> >
-  get_state_representation(size_t idx_site, size_t idx_state) const {
-
+  get_state_representation(size_t idx_site, size_t idx_state) const 
+  {
     assert(n_digit() <= RepSize);
     assert(n_site() <= SiteSize);
 
@@ -206,6 +223,7 @@ class System {
     return ret;
   }
 
+  //!< Basis Iterator
   template<size_t RepSize = 64, size_t SiteSize = RepSize>
   BasisIterator<RepSize, SiteSize, QNS...> cbegin(QNS... qns) const {
     return BasisIterator<RepSize, SiteSize, QNS...>(*this, qns...);
@@ -215,12 +233,16 @@ class System {
   BasisIterator<RepSize, SiteSize, QNS...> cend(QNS... qns) const {
     return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize,SiteSize,QNS...>::InvalidIterator() );
   };
+  //!>
 
-
-
+  //! Number of sites
   size_t n_site() const { return sites_.size(); }
 
- private:
+private:
+	//! Do nothing.
+	System & add_site() { return *this; }
+
+private:
   std::vector<SiteType> sites_;
 }; // class System
 

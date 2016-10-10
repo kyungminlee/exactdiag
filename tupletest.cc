@@ -2,8 +2,8 @@
 #include <iostream>
 #include <functional>
 #include <utility>
-#include "tuple_stream.h"
-#include "tuple_tools.h"
+#include "utility/tuple_stream.h"
+#include "utility/tuple_tools.h"
 
 int main()
 {
@@ -13,7 +13,7 @@ int main()
   auto op = make_tuple(plus<int>(), plus<int>(), plus<int>());
   cout << "a = " << a << endl;
   cout << "b = " << b << endl;
-  auto c = elementwise(a).apply_binary(op, elementwise(b));
+  //auto c = elementwise(a).apply_binary(op, elementwise(b));
 
 #if 0
   cout << "a +  b = " << (elementwise(a) +  elementwise(b)) << endl;

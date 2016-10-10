@@ -9,7 +9,6 @@
 
 #define USE_BINOP_INSIDE
 
-
 namespace aux
 {
 

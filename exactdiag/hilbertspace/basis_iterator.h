@@ -3,7 +3,7 @@
 
 #include "system.h"
 
-/*
+/*!
  *    BI(S, Q) -> BI(S, Q) -> BI(S, Q) -> null
  *       0
  *
@@ -17,6 +17,11 @@
  *
  */
 
+
+//! @class BasisIterator
+//! @tparam _RepSize Length of binary representation
+//! @tparam _SiteSize Number of sites
+//! @tparam QNS List of quantum number types.
 template <size_t _RepSize, size_t _SiteSize, typename ... QNS>
 class BasisIterator
 {
@@ -32,8 +37,13 @@ class BasisIterator
   using ValueType = std::tuple<std::bitset<RepSize>, std::bitset<SiteSize>>;
   using ConstReferenceType = const ValueType &;
 
+
+  //! Constructor
   BasisIterator(InvalidIterator) : valid_(false) { }
 
+  //! Constructor
+  //! @param system
+  //! @param QNS List of quantum numbers
   BasisIterator(const SystemType& system,
                 QNS ... quantum_number)
       : system_(system), quantum_number_(quantum_number...)

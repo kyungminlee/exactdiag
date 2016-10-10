@@ -2,20 +2,22 @@
 // Created by kmlee on 12/13/2015.
 //
 
+#include <cinttypes>
+#include <fstream>
 #include <vector>
 #include <unordered_map>
 #include <kore/array/array.h>
 #include "hilbertspace.h"
 #include "operator.h"
-#include "Eigen/Eigen"
+#include <Eigen/Eigen>
+#include <Eigen/SparseCore>
 
 
-
-
-
-int main(int argc, char** argv)
+template <typename _Scalar>
+class ChargeSpinSystemBuilder
 {
-  using namespace std;
+ public:
+  using Scalar = _Scalar;
   static const size_t RepSize = 64;
   static const size_t SiteSize = 64;
 
@@ -25,7 +27,31 @@ int main(int argc, char** argv)
   using StateType = State<Charge, Spin>;
   using SiteType = Site<Charge, Spin>;
 
-  enum { kSpinUp = 0, kSpinDn = 1 };
+  enum { kSpinUp = 0, kSpinDn = 1, kNumSpin = 2 };
+
+  ChargeSpinSystemBuilder(int64_t nx, int64_t ny) {
+
+  }
+
+
+ private:
+
+};
+
+
+int main(int argc, char** argv)
+{
+  using namespace std;
+  static const size_t RepSize = 32;
+  static const size_t SiteSize = 32;
+
+  using SystemType = System<Charge, Spin>;
+  using PureOperatorType = PureOperator<double, RepSize, SiteSize>;
+  using MixedOperatorType = MixedOperator<double, RepSize, SiteSize>;
+  using StateType = State<Charge, Spin>;
+  using SiteType = Site<Charge, Spin>;
+
+  enum { kSpinUp = 0, kSpinDn = 1, kNumSpin = 2 };
   size_t nx = 4;
   size_t ny = 4;
 
@@ -38,7 +64,6 @@ int main(int argc, char** argv)
 
     SiteType fup_site(f0, fu);
     SiteType fdn_site(f0, fd);
-
 
     for (size_t ix = 0 ; ix < nx ; ++ix) {
       for (size_t iy = 0; iy < ny; ++iy) {
@@ -59,23 +84,22 @@ int main(int argc, char** argv)
     }
   }
 
-  kore::array::Array<PureOperatorType, 3> ann(ann_data.data(), nx, ny, 2);
-  kore::array::Array<PureOperatorType, 3> cre(cre_data.data(), nx, ny, 2);
+  kore::array::Array<PureOperatorType, 3> ann(ann_data.data(), nx, ny, kNumSpin);
+  kore::array::Array<PureOperatorType, 3> cre(cre_data.data(), nx, ny, kNumSpin);
 
   double t0 = -1.5;
   double t1 = 1.0;
 
-  size_t n_hop = 5;
   std::vector<double> vs  = {-t0, -t1, -t1, -t1, -t1};
   std::vector<int>    dxs = {  0,   0,   0,   1,  -1};
   std::vector<int>    dys = {  0,   1,  -1,   0,   0};
+  size_t n_hop = vs.size();
 
   MixedOperatorType hop;
 
   for (size_t ix = 0 ; ix < nx ; ++ix) {
     for (size_t iy = 0 ; iy < ny ; ++iy) {
       for (size_t i_spin = 0 ; i_spin < 2 ; ++i_spin) {
-
         for (size_t i_hop = 0 ; i_hop < n_hop ; ++i_hop) {
           auto v = vs[i_hop];
           auto dx = dxs[i_hop];
@@ -91,8 +115,49 @@ int main(int argc, char** argv)
   }
 
   SectorGenerator<RepSize, SiteSize, Charge, Spin> sector_gen(system);
-  auto sector = sector_gen.generate(Charge(2), Spin(0));
-  for(auto v: sector.basis) { cout << v << endl; }
+  auto max_qn = system.max_quantum_number();
+  auto min_qn = system.min_quantum_number();
+
+  std::ofstream outfile("basis.txt");
+  for (auto charge = std::get<0>(min_qn); charge <= std::get<0>(max_qn); ++charge) {
+    for (auto spin = std::get<1>(min_qn); spin <= std::get<1>(max_qn); ++spin) {
+      auto sector = sector_gen.generate(charge, spin);
+      size_t n_basis = sector.basis.size();
+      if (n_basis ==  0) { continue; }
+
+      cout << charge << "," << spin << endl;
+      outfile << charge << "," << spin << endl;
+      outfile << "=======================" << endl;
+      for (auto v: sector.basis) { outfile << v << endl; }
+      outfile << endl;
+
+      Eigen::SparseMatrix<double> hamiltonian_matrix(n_basis, n_basis);
+      {
+        std::vector<Eigen::Triplet<double> > coefficients;
+
+        for (size_t i_basis = 0; i_basis < n_basis; ++i_basis) {
+          auto const &bvec_fvec = sector.basis[i_basis];
+          auto row = hop.apply(std::get<0>(bvec_fvec), std::get<1>(bvec_fvec));
+          for (auto const &r : row) {
+            auto match_iter = sector.basismap.find(std::get<0>(r));
+            if (match_iter == sector.basismap.end()) {
+              cout << "ERROR!" << endl;
+            } else {
+              coefficients.emplace_back(match_iter->second, i_basis, std::get<2>(r));
+            }
+          } // for r in row (all resulting rows after applying H to col.
+        } // for i_basis
+        hamiltonian_matrix.setFromTriplets(coefficients.begin(), coefficients.end());
+      }
+
+      cout << endl;
+      cout << hamiltonian_matrix;
+      cout << endl;
+      cout << endl;
+    }
+  }
+  outfile.close();
+  return 0;
 
 #if 0
   vector<tuple<bitset<RepSize>, bitset<SiteSize>>> basis_list;
