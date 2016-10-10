@@ -51,9 +51,12 @@ class State {
   bool operator!=(const State& state2) const {
     return !((*this) == state2);
   }
+
+  //!< Getters
   bool fermion_parity() const { return fermion_parity_; }
   const QuantumNumberTuple& quantum_number() const { return quantum_number_; }
   const QuantumNumberTuple& QN() const { return quantum_number_; }
+  //!>
 
  private:
   std::string name_;
