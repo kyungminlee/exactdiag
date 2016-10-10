@@ -7,6 +7,39 @@
 #include "operator.h"
 #include "hilbertspace.h"
 
+TEST_CASE("Site test", "[site]") {
+  State<Spin> su("SpinUp", false, Spin(1));
+  State<Spin> s0("SpinZr", false, Spin(0));
+  State<Spin> sd("SpinDn", false, Spin(-1));
+  Site<Spin> spin_site1(su, s0, sd);
+
+  //INFO( "Details of the created Site (a S = 1 spin site)" );
+  spin_site1.display(Catch::cout());
+
+  SECTION( "all member methods function properly") {
+    REQUIRE(spin_site1.n_state() == 3);
+    REQUIRE(spin_site1.n_digit() == 2);
+    auto maxqn = spin_site1.max_quantum_number();
+    auto minqn = spin_site1.min_quantum_number();
+    REQUIRE(maxqn == std::make_tuple(Spin(1)));
+    REQUIRE(minqn == std::make_tuple(Spin(-1)));
+    REQUIRE(spin_site1.state(0) == su);
+    REQUIRE(spin_site1.state(1) == s0);
+    REQUIRE(spin_site1.state(2) == sd);
+  }
+
+  SECTION("add_state works properly") {
+    Site<Spin> spin_site2(su);
+    spin_site2.add_state(s0)
+        .add_state(sd);
+    REQUIRE(spin_site1 == spin_site2);
+
+    Site<Spin> spin_site3(sd);
+    spin_site3.add_state(s0).add_state(su);
+
+    REQUIRE(spin_site1 != spin_site3);
+  }
+}
 
 TEST_CASE("Ising model test", "[ising]") {
   //static const size_t RepSize = 16;
