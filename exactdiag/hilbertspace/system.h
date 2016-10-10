@@ -223,7 +223,40 @@ public:
     return ret;
   }
 
+
+  class Subspace {
+  public:
+    Subspace(System const & parent, QNS... qns) : parent_(parent), quantum_number_tuple_(qns...) { }
+
+    //!< Basis Iterator
+    template<size_t RepSize = 64, size_t SiteSize = RepSize>
+    BasisIterator<RepSize, SiteSize, QNS...> begin() const {
+      return BasisIterator<RepSize, SiteSize, QNS...>(parent_, quantum_number_tuple_);
+    };
+
+    template<size_t RepSize = 64, size_t SiteSize = RepSize>
+    BasisIterator<RepSize, SiteSize, QNS...> end() const {
+      return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator());
+    };
+
+  private:
+    System const & parent_;
+    QuantumNumberTuple quantum_number_tuple_;
+  };
+
+  Subspace subspace(QNS... qns) const { return Subspace(*this, qns...); }
+
   //!< Basis Iterator
+  template<size_t RepSize = 64, size_t SiteSize = RepSize>
+  BasisIterator<RepSize, SiteSize, QNS...> begin(QNS... qns) const {
+    return BasisIterator<RepSize, SiteSize, QNS...>(*this, qns...);
+  };
+
+  template<size_t RepSize = 64, size_t SiteSize = RepSize>
+  BasisIterator<RepSize, SiteSize, QNS...> end(QNS... qns) const {
+    return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator());
+  };
+
   template<size_t RepSize = 64, size_t SiteSize = RepSize>
   BasisIterator<RepSize, SiteSize, QNS...> cbegin(QNS... qns) const {
     return BasisIterator<RepSize, SiteSize, QNS...>(*this, qns...);
@@ -231,7 +264,7 @@ public:
 
   template<size_t RepSize = 64, size_t SiteSize = RepSize>
   BasisIterator<RepSize, SiteSize, QNS...> cend(QNS... qns) const {
-    return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize,SiteSize,QNS...>::InvalidIterator() );
+    return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator());
   };
   //!>
 

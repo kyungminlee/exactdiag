@@ -39,25 +39,42 @@ class BasisIterator
 
 
   //! Constructor
-  BasisIterator(InvalidIterator) : valid_(false) { }
+  BasisIterator(InvalidIterator) : system_(SystemType()), valid_(false) { }
 
   //! Constructor
   //! @param system
   //! @param QNS List of quantum numbers
   BasisIterator(const SystemType& system,
-                QNS ... quantum_number)
-      : system_(system), quantum_number_(quantum_number...)
-      , cumulative_quantum_number_(system_.n_site()) // all zero at the beginning.
-      , current_state_(system_.n_site())
-      , valid_(true)
+    QNS ... quantum_number)
+    : system_(system), quantum_number_(quantum_number...)
+    , cumulative_quantum_number_(system_.n_site()) // all zero at the beginning.
+    , current_state_(system_.n_site())
+    , valid_(true)
   {
     assert(system_.n_site() > 0);
-    cumulative_quantum_number_[system_.n_site()-1] = std::make_tuple(QNS(0)...);
-    if (!set_first_rec(system_.n_site()-1)) {
+    cumulative_quantum_number_[system_.n_site() - 1] = std::make_tuple(QNS(0)...);
+    if (!set_first_rec(system_.n_site() - 1)) {
       //throw std::logic_error("Dictionary empty");
       valid_ = false;
     }
+  }
 
+  //! Constructor
+  //! @param system
+  //! @param QNS List of quantum numbers
+  BasisIterator(const SystemType& system,
+    QuantumNumberTuple const & quantum_number_tuple)
+    : system_(system), quantum_number_(quantum_number_tuple)
+    , cumulative_quantum_number_(system_.n_site()) // all zero at the beginning.
+    , current_state_(system_.n_site())
+    , valid_(true)
+  {
+    assert(system_.n_site() > 0);
+    cumulative_quantum_number_[system_.n_site() - 1] = std::make_tuple(QNS(0)...);
+    if (!set_first_rec(system_.n_site() - 1)) {
+      //throw std::logic_error("Dictionary empty");
+      valid_ = false;
+    }
   }
 
   template <typename T1, typename T2>
@@ -194,6 +211,9 @@ class BasisIterator
     return false; // TODO
   }
 
+  bool operator!=(const BasisIterator& iter) const {
+    return !((*this) == iter);
+  }
   const std::vector<size_t>& operator*() const {
     //if( !valid_) { throw std::runtime_error("trying to access invalid iterator"); }
     return current_state_;
