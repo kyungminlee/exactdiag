@@ -25,7 +25,6 @@ int main_spinfermion(int argc, char** argv)
     Site<Charge, Spin> fup_site(f0, fu);
     Site<Charge, Spin> fdn_site(f0, fd);
 
-
     system.add_site(spin_site);
     system.add_site(fup_site);
     system.add_site(fdn_site);
