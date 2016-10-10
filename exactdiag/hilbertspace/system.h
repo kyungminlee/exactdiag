@@ -236,7 +236,8 @@ public:
 
     template<size_t RepSize = 64, size_t SiteSize = RepSize>
     BasisIterator<RepSize, SiteSize, QNS...> end() const {
-      return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator());
+      using InvalidIterator = typename BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator;
+      return BasisIterator<RepSize, SiteSize, QNS...>(InvalidIterator());
     };
 
   private:
@@ -254,7 +255,8 @@ public:
 
   template<size_t RepSize = 64, size_t SiteSize = RepSize>
   BasisIterator<RepSize, SiteSize, QNS...> end(QNS... qns) const {
-    return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator());
+    using InvalidIterator = typename BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator;
+    return BasisIterator<RepSize, SiteSize, QNS...>(InvalidIterator());
   };
 
   template<size_t RepSize = 64, size_t SiteSize = RepSize>
@@ -264,7 +266,8 @@ public:
 
   template<size_t RepSize = 64, size_t SiteSize = RepSize>
   BasisIterator<RepSize, SiteSize, QNS...> cend(QNS... qns) const {
-    return BasisIterator<RepSize, SiteSize, QNS...>(BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator());
+    using InvalidIterator = typename BasisIterator<RepSize, SiteSize, QNS...>::InvalidIterator;
+    return BasisIterator<RepSize, SiteSize, QNS...>(InvalidIterator());
   };
   //!>
 
