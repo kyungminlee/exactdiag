@@ -29,8 +29,7 @@ set(HEADER_FILES
     exactdiag/operator/generic_operator.h)
 
 include_directories(exactdiag "${KORE_ROOT}")
-add_executable(ed2 ${SOURCE_FILES} ${HEADER_FILES})
-
+add_executable(exactdiag_main ${SOURCE_FILES} ${HEADER_FILES})
 
 add_subdirectory(tests)
 add_subdirectory(examples)
